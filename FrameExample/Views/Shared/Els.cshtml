@@ -1,0 +1,9 @@
+﻿@using Frame;
+@{
+    List<El> list = Model;
+}
+
+@foreach (El e in list)
+{
+    @Html.Partial(e.View, e)
+}

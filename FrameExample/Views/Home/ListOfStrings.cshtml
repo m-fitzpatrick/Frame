@@ -1,0 +1,12 @@
+﻿@using FrameExample
+@{ 
+    ListOfStrings list = Model;
+}
+
+<div @list.AllAttributes>
+
+    @Html.Partial(list.CountLabel.View, list.CountLabel)
+
+    @Html.Partial(list.Content.View, list.Content)
+
+</div>

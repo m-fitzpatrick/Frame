@@ -1,0 +1,26 @@
+﻿
+@using FrameExample
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    Login loginScreen = Model;
+}
+
+<div class="login-box">
+    <div class="login-box">
+        <div>
+            Email Address:<br />
+            @Html.Partial(loginScreen.UserName.View, loginScreen.UserName)
+        </div>
+
+        <div>
+            Password:<br />
+            <input type="password" @loginScreen.Password.AllAttributes />
+        </div>
+
+        <br />
+
+        <button @loginScreen.LoginButton.AllAttributes onclick="@loginScreen.LoginButton.Click.Script">@loginScreen.LoginButton.Value</button>
+
+    </div>
+</div>
+

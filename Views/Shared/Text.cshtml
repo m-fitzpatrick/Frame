@@ -1,0 +1,6 @@
+﻿@{
+    Text text = Model;
+}
+
+<input @text.AllAttributes type="@text.InputType" value="@text.Value" @Html.Raw(text.RenderClientOnEnter()) />
+

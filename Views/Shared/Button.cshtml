@@ -1,0 +1,5 @@
+﻿@{ 
+    Button b = Model;
+}
+
+<input  @b.AllAttributes type="button" value="@b.Value" onclick="@b.Click.Script" />

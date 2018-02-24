@@ -1,0 +1,13 @@
+﻿@using Frame;
+@{
+    Div div = ViewBag.El;
+}
+<div @div.AllAttributes>
+
+    @foreach (El e in div.Els)
+    {
+        ViewBag.El = e;
+        @Html.Partial(e.View)
+    }
+
+</div>

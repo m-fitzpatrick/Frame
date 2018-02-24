@@ -1,0 +1,20 @@
+﻿@using FrameExample
+@{
+    ViewBag.Title = "Example";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ExampleScreen screen = Model;
+}
+
+<span>Enter some text:</span>
+@Html.Partial(screen.NewStringBox.View, screen.NewStringBox)
+
+@Html.Partial(screen.AddStringButton.View, screen.AddStringButton)
+
+@Html.Partial(screen.StringList.View, screen.StringList)
+
+@section OnDocumentReady {
+    
+    @Html.Raw(screen.NewStringBox.FocusScript)
+}
+
+

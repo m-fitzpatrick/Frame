@@ -1,0 +1,9 @@
+﻿@using FrameExample;
+@{ 
+    StringItem item = (StringItem)Model;
+}
+
+<div @item.AllAttributes>
+    <button onclick="@item.RemoveString.Script">X</button>@item.StringValue
+</div>
+

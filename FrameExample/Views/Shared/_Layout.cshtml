@@ -1,0 +1,37 @@
+﻿
+@using Frame
+@{
+    Layout = null;
+    Screen screen = Model;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@screen.Title.Value</title>
+
+    <link rel="stylesheet" type="text/css" href="~/Content/Site.css">
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="/Scripts/frame.js"></script>
+    
+</head>
+
+<body @screen.Body.AllAttributes>
+    @RenderBody()
+
+    <script>
+
+        $(document).ready(function () {
+
+            @RenderSection("OnDocumentReady", false)
+
+        });
+
+    </script>
+
+</body>
+
+</html>

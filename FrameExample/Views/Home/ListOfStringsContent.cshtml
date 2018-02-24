@@ -1,0 +1,8 @@
+﻿@using FrameExample
+@{
+    ListOfStringsContent list = Model;
+}
+
+<div @list.AllAttributes style="border: thin solid #CCCCCC;">
+    @Html.Partial("Els", list.ElsList)
+</div>
