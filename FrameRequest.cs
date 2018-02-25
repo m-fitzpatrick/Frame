@@ -30,6 +30,8 @@ namespace Frame
         {
             get
             {
+                // are we sharing this data across a remote processes or something? If not, shouldn't we just use
+                // a wrapper around HttpContext? Just wondering about the choice to use CallContext vs HttpContext.Current.Items
                 return (FrameRequest)CallContext.GetData("FrameRequest");
             }
 

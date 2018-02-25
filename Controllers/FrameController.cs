@@ -1,23 +1,21 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.Remoting.Messaging;
-using System.Text;
-using System.Web;
+using System.Threading;
 using System.Web.Mvc;
 
 namespace Frame
 {
     public class FrameController : Controller
     {
-        public ActionResult Event()
+        public JsonResult Event()
         {
             FrameSession session = CurrentFrameSession;
             if (session == null)
                 throw new Exception("No session found");
 
-            FrameRequest request = new Frame.FrameRequest(session, this);
+            FrameRequest request = new FrameRequest(session, this);
 
             foreach (String key in Request.Form.AllKeys)
             {
@@ -38,28 +36,20 @@ namespace Frame
 
             Act target = (Act)session.Find(Request["path"]);
             target.Handler();
+            // this would be easier if we just utilized the default Json serializer, no?
+            // just make an anon type and serialize
+            IList<object> result = new List<object>();
 
-            StringBuilder json = new StringBuilder();
-            json.Append("{\"d\":[");
-            int i = 0;
-
-            lock (request.Response.Updates)
+            // lock (request.Response.Updates) -- changed this to concurrentbag
+            request.Response.ApplyChanges();
+            foreach (ResponseUpdate update in request.Response.Updates)
             {
-                request.Response.ApplyChanges();
-                foreach (ResponseUpdate update in request.Response.Updates)
-                {
-                    if (i > 0)
-                        json.Append(", ");
-
-                    update.Render(json);
-                    i++;
-                }
-                request.Response.Updates.Clear();
+                result.Add(update.Render());
             }
+            // this may be expensive
+            Interlocked.Exchange(ref request.Response.Updates, new ConcurrentBag<ResponseUpdate>());
 
-            json.Append("]}");
-
-            return Content(json.ToString(), "application/json");
+            return Json(result);
         }
 
         public ActionResult Screen()
@@ -100,7 +90,7 @@ namespace Frame
                 ViewContext viewContext = new ViewContext(ControllerContext, viewResult.View, ViewData, TempData, sw);
                 viewResult.View.Render(viewContext, sw);
 
-                return sw.GetStringBuilder().ToString();
+                return sw.ToString();
             }
         }
     }

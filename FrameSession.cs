@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Concurrent;
 using System.Web;
 
 namespace Frame
@@ -11,11 +10,10 @@ namespace Frame
 
         public String Id = Guid.NewGuid().ToString();
 
-        public Dictionary<String, Screen> Screens = new Dictionary<string, Screen>();
+        public ConcurrentDictionary<string, Screen> Screens = new ConcurrentDictionary<string, Screen>();
         public Screen Add(Screen s)
         {
-            lock (Screens)
-                Screens.Add(s.Id, s);
+            Screens.TryAdd(s.Id, s);
 
             return s;
         }
@@ -23,17 +21,21 @@ namespace Frame
         public El Find(String path)
         {
             El ret = null;
-            String[] ids = path.Split('.');
-            Screen screen = Screens[ids[0]];
 
-            if (ids.Length == 1)
-                return screen;
-
-            ret = screen.Find(ids[1]);
-
-            for (int i = 2; i < ids.Length; i++)
+            if (!string.IsNullOrEmpty(path))
             {
-                ret = ret.Find(ids[i]);
+                String[] ids = path.Split('.');
+                Screen screen = Screens[ids[0]];
+
+                if (ids.Length == 1)
+                    return screen;
+
+                ret = screen.Find(ids[1]);
+
+                for (int i = 2; i < ids.Length; i++)
+                {
+                    ret = ret.Find(ids[i]);
+                }
             }
 
             return ret;
@@ -42,7 +44,7 @@ namespace Frame
         public void Dispose()
         {
             //dispose screens?
-
+            // if they implement IDisposable
             Screens.Clear();
             Screens = null;
         }
@@ -69,12 +71,13 @@ namespace Frame
 
     public class MemoryCookieFrameSessionManager : FrameSessionManager
     {
-        public Dictionary<String, FrameSession> Sessions = new Dictionary<string, FrameSession>();
+        public ConcurrentDictionary<String, FrameSession> Sessions = new ConcurrentDictionary<string, FrameSession>();
 
         public override FrameSession Add(FrameSession session)
         {
-            lock (Sessions)
-                Sessions.Add(session.Id, session);
+            //lock (Sessions)
+            // If thread safety is the issue here, ConcurrentDictionary will work better
+            Sessions.TryAdd(session.Id, session);
 
             return session;
         }
@@ -82,16 +85,20 @@ namespace Frame
         public override FrameSession Find(string sessionId)
         {
             if (Sessions.ContainsKey(sessionId))
+            {
                 return Sessions[sessionId];
-            else
-                return null;
+            }
+
+            return null;
         }
 
         public override void Remove(string sessionId)
         {
-            FrameSession session = Find(sessionId);
-            Sessions.Remove(sessionId);
-            session.Dispose();
+            FrameSession outSession;
+            if (Sessions.TryRemove(sessionId, out outSession))
+            {
+                outSession.Dispose();
+            }
         }
 
         public override void SetId(HttpSessionStateBase session, HttpRequestBase request, HttpResponseBase response, String sessionId)
@@ -105,9 +112,11 @@ namespace Frame
         {
             HttpCookie sessionCookie = request.Cookies["FrameSessionId"];
             if (sessionCookie == null)
-                return "";
-            else
-                return sessionCookie.Value;
+            {
+                return string.Empty;
+            }
+            
+            return sessionCookie.Value;
         }
     }
 }

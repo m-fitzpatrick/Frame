@@ -1,15 +1,14 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Web;
 
 namespace Frame
 {
     public class FrameResponse
     {
-        public List<ResponseUpdate> Updates = new List<ResponseUpdate>();
+        public ConcurrentBag<ResponseUpdate> Updates = new ConcurrentBag<ResponseUpdate>();
         public FrameRequest Request;
+
         public FrameResponse(FrameRequest request)
         {
             Request = request;
@@ -17,7 +16,7 @@ namespace Frame
 
         public void Redirect(String url)
         {
-            Updates.Add(new UpdateScript("window.location = '" + url +"'"));
+            Updates.Add(new UpdateScript("window.location = '" + url + "'"));
         }
 
         public void Script(String script)
@@ -33,6 +32,7 @@ namespace Frame
         public Dictionary<String, El> AddedEls = new Dictionary<string, El>();
         public Dictionary<String, El> UpdatedEls = new Dictionary<string, El>();
         public Dictionary<String, ElTag> RemovedEls = new Dictionary<string, ElTag>();
+
         public void Added(El el)
         {
             if (el is Body || el is Act)
@@ -61,7 +61,7 @@ namespace Frame
         }
 
         public void ApplyChanges()
-        {            
+        {
             foreach(KeyValuePair<String, El> k in AddedEls)
             {
                 if (k.Value.Parent != null && HasChanged(k.Value.Parent.Id))
@@ -110,51 +110,7 @@ namespace Frame
 
     public abstract class ResponseUpdate
     {
-        public abstract void Render(StringBuilder json);
-
-        public static string EncodeForJson(string s)
-        {
-            StringBuilder sb = new StringBuilder();
-            foreach (char c in s)
-            {
-                switch (c)
-                {
-                    case '\"':
-                        sb.Append("\\\"");
-                        break;
-                    case '\\':
-                        sb.Append("\\\\");
-                        break;
-                    case '\b':
-                        sb.Append("\\b");
-                        break;
-                    case '\f':
-                        sb.Append("\\f");
-                        break;
-                    case '\n':
-                        sb.Append("\\n");
-                        break;
-                    case '\r':
-                        sb.Append("\\r");
-                        break;
-                    case '\t':
-                        sb.Append("\\t");
-                        break;
-                    default:
-                        int i = (int)c;
-                        if (i < 32 || i > 127)
-                        {
-                            sb.AppendFormat("\\u{0:X04}", i);
-                        }
-                        else
-                        {
-                            sb.Append(c);
-                        }
-                        break;
-                }
-            }
-            return sb.ToString();
-        }
+        public abstract object Render();
     }
 
     public class UpdateScript : ResponseUpdate
@@ -168,9 +124,13 @@ namespace Frame
             ValidOnInit = validOnInit;
         }
 
-        public override void Render(StringBuilder json)
+        public override object Render()
         {
-            json.Append("{\"name\":\"script\", \"script\":\"" + EncodeForJson(Script) + "\"}");
+            return new
+                    {
+                        name = "script",
+                        script = Script
+                    };
         }
     }
 
@@ -185,24 +145,33 @@ namespace Frame
             Html = html;
         }
 
-        public override void Render(StringBuilder json)
+        public override object Render()
         {
-            json.Append("{\"name\":\"replace\", \"path\": \"" + Path + "\", \"html\":\"" + EncodeForJson(Html) + "\"}");
+            return new
+                    {
+                        name = "replace",
+                        path = Path,
+                        html = Html
+                    };
         }
     }
 
     public class UpdateRemove : ResponseUpdate
     {
-        public String Path;        
+        public String Path;
 
         public UpdateRemove(String path)
         {
             Path = path;
         }
 
-        public override void Render(StringBuilder json)
+        public override object Render()
         {
-            json.Append("{\"name\":\"remove\", \"path\": \"" + Path + "\"}");
+            return new
+                    {
+                        name = "remove",
+                        path = Path
+                    };
         }
     }
 
@@ -217,9 +186,14 @@ namespace Frame
             Html = html;
         }
 
-        public override void Render(StringBuilder json)
+        public override object Render()
         {
-            json.Append("{\"name\":\"add\", \"path\": \"" + Path + "\", \"html\":\"" + EncodeForJson(Html) + "\"}");
+            return new
+                    {
+                        name = "add",
+                        path = Path,
+                        html = Html
+                    };
         }
     }
 }
